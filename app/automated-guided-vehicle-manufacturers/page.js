@@ -72,7 +72,7 @@ export default function Page() {
             <img src="/assets/images/m1.jpeg" alt="Industry 1" />
             <img src="/assets/images/m2.jpeg" alt="Industry 2" />
             <img src="/assets/images/m3.jpeg" alt="Industry 3" />
-            // <img src="/assets/images/m4.jpeg" alt="Industry 4" />
+            {/* <img src="/assets/images/m4.jpeg" alt="Industry 4" /> */}
           </div>
         </section>
 
@@ -316,9 +316,9 @@ export default function Page() {
             <div className={styles.galleryImage}>
               <img src="https://sp-ao.shortpixel.ai/client/to_auto,q_lossy,ret_img,w_300/https://www.tetrahedron.in/wp-content/uploads/2023/06/A_Autonomous_mo_1-transformed-300x300.png" alt="Gallery Image 4" />
             </div>
-            // <div className={styles.galleryImage}>
-            //   <img src="https://sp-ao.shortpixel.ai/client/to_auto,q_lossy,ret_img,w_350,h_280/https://www.tetrahedron.in/wp-content/uploads/2024/08/Autonomous-Mobile-Robots-14.png" alt="Gallery Image 5" />
-            // </div>
+            {/* <div className={styles.galleryImage}>
+              <img src="https://sp-ao.shortpixel.ai/client/to_auto,q_lossy,ret_img,w_350,h_280/https://www.tetrahedron.in/wp-content/uploads/2024/08/Autonomous-Mobile-Robots-14.png" alt="Gallery Image 5" />
+            </div> */}
           </div>
         </section>
 
