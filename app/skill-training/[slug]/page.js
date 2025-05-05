@@ -79,29 +79,29 @@ const themes = {
     },
     // Theme 4: Minimalist Blue/Gray
     themeMinimalist: {
-       name: 'minimalist',
-       primary: '#0077b6',     // Cerulean Blue
-       secondary: '#adb5bd',   // Light Gray
-       accentLight: '#f1f3f5', // Very light gray/blue tint
-       accentDark: '#023e8a',  // Darker Blue
-       textPrimary: '#111',
-       textSecondary: '#444',
-       bgLight: '#ffffff',
-       bgAccent: '#f1f3f5',
-       bannerBg: '#03045e', // Very Dark Blue
-       cardRadius: '4px', // Sharp corners
-       buttonPadding: '0.9rem 2.5rem',
+        name: 'minimalist',
+        primary: '#0077b6',     // Cerulean Blue
+        secondary: '#adb5bd',   // Light Gray
+        accentLight: '#f1f3f5', // Very light gray/blue tint
+        accentDark: '#023e8a',  // Darker Blue
+        textPrimary: '#111',
+        textSecondary: '#444',
+        bgLight: '#ffffff',
+        bgAccent: '#f1f3f5',
+        bannerBg: '#03045e', // Very Dark Blue
+        cardRadius: '4px', // Sharp corners
+        buttonPadding: '0.9rem 2.5rem',
         hoverEffect: {
-           transform: 'translateY(-4px)',
-           shadow: '0 8px 12px rgba(0, 119, 182, 0.1)', // Subtle blue shadow
-       },
-       iconWrapperBg: 'rgba(0, 119, 182, 0.08)',
-       underlineColor: '#0077b6',
-       titleFontWeight: '700',
-   },
+            transform: 'translateY(-4px)',
+            shadow: '0 8px 12px rgba(0, 119, 182, 0.1)', // Subtle blue shadow
+        },
+        iconWrapperBg: 'rgba(0, 119, 182, 0.08)',
+        underlineColor: '#0077b6',
+        titleFontWeight: '700',
+    },
     // Default theme if slug doesn't match or theme key is missing
     defaultTheme: {
-         name: 'default',
+        name: 'default',
         primary: '#005f73',
         secondary: '#ff7b00',
         accentLight: '#e0f7fa',
@@ -130,15 +130,18 @@ export default function TrainingPage({ params }) {
     if (!data) return notFound();
 
     // --- Determine Current Theme ---
-    // Access the locally defined themes object
     const currentTheme = useMemo(() => {
         const themeName = data.theme || 'defaultTheme';
-        // Access the 'themes' object defined above
         return themes[themeName] || themes.defaultTheme;
     }, [data.theme]);
 
     // --- State for Hover Effects ---
     const [hoverStates, setHoverStates] = useState({});
+
+    // --- Helper Functions ---
+    const isNonEmptyArray = (arr) => Array.isArray(arr) && arr.length > 0;
+    const isNonEmptyString = (str) => typeof str === 'string' && str.trim() !== '';
+    // --- End Helper Functions ---
 
     // --- Dynamic Styles Function (Uses currentTheme) ---
     const dynamicStyles = useMemo(() => ({
@@ -303,7 +306,8 @@ export default function TrainingPage({ params }) {
 
     const renderParagraphs = (text, style = {}) => {
         if (!text) return null;
-        const paragraphs = Array.isArray(text) ? text : text.split('\n');
+        const paragraphs = Array.isArray(text) ? text.filter(p => isNonEmptyString(p)) : (isNonEmptyString(text) ? text.split('\n') : []);
+        if (paragraphs.length === 0) return null; // Return null if no valid paragraphs
         // Default color from theme's text secondary, unless overridden
         const baseStyle = { lineHeight: 1.7, color: style.color || currentTheme.textSecondary || '#4a5568' };
         return paragraphs.map((paragraph, index) => (
@@ -322,7 +326,7 @@ export default function TrainingPage({ params }) {
     };
 
     // CTA Button with theme-based hover
-     const renderCtaButton = (text, href = "#") => {
+    const renderCtaButton = (text, href = "#") => {
         const key = `cta-${text?.replace(/\s+/g, '-') || Math.random()}`; // Unique key for hover state
         const isHovered = hoverStates[key];
         const baseButtonStyle = dynamicStyles.ctaButton;
@@ -347,44 +351,69 @@ export default function TrainingPage({ params }) {
     };
 
 
-    // --- Component Rendering Functions (No major changes needed here, they use dynamicStyles) ---
+    // --- Component Rendering Functions ---
 
-    const renderBanner = () => (
+    const renderBanner = () => ( // Banner usually always shows, no major content check needed inside, but the data itself is checked initially
         <div style={dynamicStyles.banner}>
             {data.image && <img src={data.image} style={dynamicStyles.bannerImage} alt={data.title || "Training Banner"} />}
             <div style={dynamicStyles.bannerContent}>
                 {data.bannerTitle && <h1 style={dynamicStyles.bannerTitle}>{data.bannerTitle}</h1>}
                 {data.bannerSubtitle && <p style={dynamicStyles.bannerSubtitle}>{data.bannerSubtitle}</p>}
-                {data.bannerDescription && <div style={dynamicStyles.bannerDescription}>{renderParagraphs(data.bannerDescription, { color: 'rgba(255,255,255,0.95)' })}</div>}
+                {/* Check if bannerDescription has renderable content */}
+                {renderParagraphs(data.bannerDescription, { color: 'rgba(255,255,255,0.95)' }) &&
+                    <div style={dynamicStyles.bannerDescription}>{renderParagraphs(data.bannerDescription, { color: 'rgba(255,255,255,0.95)' })}</div>
+                }
                 {renderCtaButton(data.ctaButtonText || "Enroll Now / Learn More", data.ctaButtonLink)}
             </div>
         </div>
     );
 
-    const renderIntro = () => data.introText && (
-        <section style={dynamicStyles.dynamicSection} className="text-center">
-            <div className="fs-5 mx-auto" style={{ maxWidth: "900px" }}>
-                 {renderParagraphs(data.introText)} {/* Use default paragraph color */}
-            </div>
-        </section>
-    );
+    // MODIFIED: Render Intro only if introText has content
+    const renderIntro = () => {
+        const introContent = renderParagraphs(data.introText);
+        return introContent && (
+            <section style={dynamicStyles.dynamicSection} className="text-center">
+                <div className="fs-5 mx-auto" style={{ maxWidth: "900px" }}>
+                    {introContent}
+                </div>
+            </section>
+        );
+    }
 
-    const renderWhyChoose = () => data.whyChoose && (
-        <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgLight }} className="text-center">
-            {renderSectionTitle(data.whyChoose.title || "Why Choose This Training?")}
-            <div className="fs-5 mx-auto mb-4" style={{ maxWidth: "900px" }}>
-                {renderParagraphs(data.whyChoose.content)}
-            </div>
-            {data.whyChoose.subTitle && <h4 className="fw-semibold mt-4 mb-2" style={{ color: dynamicStyles.cardTitle.color }}>{data.whyChoose.subTitle}</h4>}
-            <div className="fs-5 mx-auto mb-4" style={{ maxWidth: "900px" }}>
-                {renderParagraphs(data.whyChoose.subText)}
-            </div>
-            {renderCtaButton(data.whyChoose.button?.title || "Register Now", data.whyChoose.button?.link)}
-        </section>
-    );
+    // MODIFIED: Render WhyChoose section only if it has content, and title only if content exists
+    const renderWhyChoose = () => {
+        const whyChooseData = data.whyChoose;
+        if (!whyChooseData) return null;
 
-     // Generic Card Renderer (Uses dynamicStyles and hover state)
-     const renderCard = (item, index, type) => {
+        const hasContent = renderParagraphs(whyChooseData.content);
+        const hasSubText = renderParagraphs(whyChooseData.subText);
+        const hasButton = whyChooseData.button && isNonEmptyString(whyChooseData.button.title);
+
+        if (!hasContent && !hasSubText && !hasButton) return null; // Don't render section if totally empty
+
+        return (
+            <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgLight }} className="text-center">
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(hasContent || hasSubText || hasButton) && renderSectionTitle(whyChooseData.title || "Why Choose This Training?")}
+
+                {hasContent && <div className="fs-5 mx-auto mb-4" style={{ maxWidth: "900px" }}>{hasContent}</div>}
+
+                {whyChooseData.subTitle && <h4 className="fw-semibold mt-4 mb-2" style={{ color: dynamicStyles.cardTitle.color }}>{whyChooseData.subTitle}</h4>}
+
+                {hasSubText && <div className="fs-5 mx-auto mb-4" style={{ maxWidth: "900px" }}>{hasSubText}</div>}
+
+                {hasButton && renderCtaButton(whyChooseData.button.title, whyChooseData.button.link)}
+            </section>
+        );
+    }
+
+    // Generic Card Renderer (Uses dynamicStyles and hover state)
+    const renderCard = (item, index, type) => {
+        // Ensure item has at least a title or description to render
+        const cardTitle = item.title || item.level || item.phase || item.step;
+        const cardDescriptionContent = renderParagraphs(item.description || item.desc || item.content);
+        if (!isNonEmptyString(cardTitle) && !cardDescriptionContent) return null; // Don't render empty cards
+
         const key = `${type}-${index}`;
         const isHovered = hoverStates[key];
         // Apply hover effect styles directly if hovered
@@ -404,233 +433,342 @@ export default function TrainingPage({ params }) {
                     onMouseLeave={() => handleMouseLeave(key)}
                 >
                     {item.icon && getIcon(item.icon)}
-                    {/* Ensure title uses themed color */}
-                    <h5 style={dynamicStyles.cardTitle}>{item.title || item.level || item.phase || item.step}</h5>
-                    {/* Paragraphs will inherit color via renderParagraphs */}
-                    <div style={dynamicStyles.cardDescription}>
-                        {renderParagraphs(item.description || item.desc || item.content)}
-                    </div>
+                    {isNonEmptyString(cardTitle) && <h5 style={dynamicStyles.cardTitle}>{cardTitle}</h5>}
+                    {cardDescriptionContent && <div style={dynamicStyles.cardDescription}>{cardDescriptionContent}</div>}
                 </div>
             </div>
         );
     };
 
 
-    // Render Pillars (APQP Style - specific structure)
-    const renderPillars = () => data.pillars && Array.isArray(data.pillars) && (
-        <section style={dynamicStyles.dynamicSection}>
-            {data.pillars.find(p => p.isSectionTitle) && renderSectionTitle(data.pillars.find(p => p.isSectionTitle).title)}
-            {data.pillars.find(p => p.isImage) && (
-                 <div className="mb-5 text-center">
-                    <img src={data.pillars.find(p => p.isImage).image} alt={data.pillars.find(p => p.isSectionTitle)?.title || 'Pillars'} className="img-fluid rounded shadow-sm" style={{ maxWidth: '700px' }} />
-                </div>
-            )}
-            <div className="row g-4 justify-content-center">
-                {data.pillars.filter(p => !p.isSectionTitle && !p.isImage).map((pillar, index) => renderCard(pillar, index, 'pillar'))}
-            </div>
-        </section>
-    );
+    // MODIFIED: Render Pillars section only if it has content, and title only if content exists
+    const renderPillars = () => {
+        if (!data.pillars || !Array.isArray(data.pillars)) return null;
 
-     // Render Key Concepts/Focus Areas/Tools/Perspectives/Phases (Common Card Style)
+        const titlePillar = data.pillars.find(p => p.isSectionTitle);
+        const imagePillar = data.pillars.find(p => p.isImage);
+        const cardPillars = data.pillars.filter(p => !p.isSectionTitle && !p.isImage);
+        const renderedCards = cardPillars.map((pillar, index) => renderCard(pillar, index, 'pillar')).filter(Boolean); // Filter out null results from renderCard
+
+        if (renderedCards.length === 0 && !imagePillar) return null; // Don't render if no cards and no image
+
+        return (
+            <section style={dynamicStyles.dynamicSection}>
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(imagePillar || renderedCards.length > 0) && titlePillar && renderSectionTitle(titlePillar.title)}
+
+                {imagePillar && (
+                    <div className="mb-5 text-center">
+                        <img src={imagePillar.image} alt={titlePillar?.title || 'Pillars'} className="img-fluid rounded shadow-sm" style={{ maxWidth: '700px' }} />
+                    </div>
+                )}
+                {renderedCards.length > 0 && (
+                    <div className="row g-4 justify-content-center">
+                        {renderedCards}
+                    </div>
+                )}
+            </section>
+        );
+    };
+
+    // MODIFIED: Render Key Concepts section only if it has content, and title only if content exists
     const renderKeyConcepts = (dataKey, defaultTitle) => {
         const sectionData = data[dataKey];
         if (!sectionData) return null;
 
         let itemsToRender = sectionData.items || sectionData.technicalPillars || [];
         if (dataKey === 'wcmPillars' && sectionData.managerialPillars) {
-             itemsToRender = [...itemsToRender, ...sectionData.managerialPillars];
+            itemsToRender = [...itemsToRender, ...sectionData.managerialPillars];
         }
-        if (!Array.isArray(itemsToRender) || itemsToRender.length === 0) return null;
+
+        const descriptionContent = renderParagraphs(sectionData.description);
+        const renderedCards = isNonEmptyArray(itemsToRender)
+            ? itemsToRender.map((item, index) => renderCard(item, index, dataKey)).filter(Boolean) // Filter out null cards
+            : [];
+
+        // Don't render section if no image, no description, and no cards
+        if (!sectionData.image && !descriptionContent && renderedCards.length === 0) return null;
 
         return (
             <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgAccent }}>
-                {renderSectionTitle(sectionData.title || defaultTitle)}
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(sectionData.image || descriptionContent || renderedCards.length > 0) && renderSectionTitle(sectionData.title || defaultTitle)}
+
                 {sectionData.image && (
                     <div className="mb-5 text-center">
                         <img src={sectionData.image} alt={sectionData.title || defaultTitle} className="img-fluid rounded shadow-sm" style={{ maxWidth: '700px' }} />
                     </div>
                 )}
-                {sectionData.description && <div className="fs-5 text-center mx-auto mb-5" style={{ maxWidth: "900px" }}>{renderParagraphs(sectionData.description)}</div>}
+                {descriptionContent && <div className="fs-5 text-center mx-auto mb-5" style={{ maxWidth: "900px" }}>{descriptionContent}</div>}
+                {renderedCards.length > 0 && (
+                    <div className="row g-4 justify-content-center">
+                        {renderedCards}
+                    </div>
+                )}
+            </section>
+        );
+    };
+
+    // MODIFIED: Render Process Steps section only if it has content, and title only if content exists
+    const renderProcessSteps = () => {
+        const sectionData = data.processSteps;
+        const steps = sectionData?.steps;
+        if (!isNonEmptyArray(steps) && !sectionData?.image) return null; // Don't render if no steps and no image
+
+        const validSteps = steps?.filter(step => isNonEmptyString(step.title) || renderParagraphs(step.description)); // Filter steps that have actual content
+        if (validSteps?.length === 0 && !sectionData?.image) return null; // Don't render if no valid steps and no image
+
+        return (
+            <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgLight }}>
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(sectionData.image || validSteps?.length > 0) && renderSectionTitle(sectionData.title || "Our Approach")}
+
+                {sectionData.image && (
+                    <div className="mb-5 text-center">
+                        <img src={sectionData.image} alt={sectionData.title || "Process Steps"} className="img-fluid rounded shadow-sm" style={{ maxWidth: '600px' }} />
+                    </div>
+                )}
+                {validSteps?.length > 0 && (
+                    <div className="row justify-content-center">
+                        <div className="col-md-10 col-lg-9">
+                            <ol className="list-unstyled">
+                                {validSteps.map((step, idx) => {
+                                    const stepDescription = renderParagraphs(step.description, { marginBottom: '0' });
+                                    return ( // Render list item only if it has content
+                                        (isNonEmptyString(step.title) || stepDescription) && (
+                                            <li key={idx} style={dynamicStyles.stepItem}>
+                                                <div style={dynamicStyles.stepNumber}>{idx + 1}</div>
+                                                <div>
+                                                    {isNonEmptyString(step.title) && <h6 className="fw-semibold mb-1" style={{ color: currentTheme.textPrimary }}>{step.title}</h6>}
+                                                    {stepDescription}
+                                                </div>
+                                            </li>
+                                        )
+                                    );
+                                })}
+                            </ol>
+                        </div>
+                    </div>
+                )}
+            </section>
+        );
+    };
+
+    // MODIFIED: Render Features section only if it has content, and title only if content exists
+    const renderFeatures = () => {
+        if (!isNonEmptyArray(data.features)) return null;
+        const renderedCards = data.features.map((feature, idx) => renderCard(feature, idx, 'feature')).filter(Boolean);
+        if (renderedCards.length === 0) return null; // Don't render if no valid cards
+
+        return (
+            <section style={dynamicStyles.dynamicSection}>
+                {/* --- MODIFIED: Conditional Title --- */}
+                {renderedCards.length > 0 && renderSectionTitle(data.features.title || "Key Benefits")}
                 <div className="row g-4 justify-content-center">
-                    {itemsToRender.map((item, index) => renderCard(item, index, dataKey))}
+                    {renderedCards}
                 </div>
             </section>
         );
     };
 
-    // Render Process Steps (Numbered List Style)
-    const renderProcessSteps = () => {
-        const sectionData = data.processSteps;
-        const steps = sectionData?.steps;
-         if (!steps || !Array.isArray(steps) || steps.length === 0) return null;
 
-         return (
-             <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgLight }}>
-                 {renderSectionTitle(sectionData.title || "Our Approach")}
-                 {sectionData.image && (
-                     <div className="mb-5 text-center">
-                         <img src={sectionData.image} alt={sectionData.title || "Process Steps"} className="img-fluid rounded shadow-sm" style={{ maxWidth: '600px' }} />
-                     </div>
-                 )}
-                 <div className="row justify-content-center">
-                     <div className="col-md-10 col-lg-9">
-                         <ol className="list-unstyled">
-                             {steps.map((step, idx) => (
-                                 <li key={idx} style={dynamicStyles.stepItem}>
-                                     <div style={dynamicStyles.stepNumber}>{idx + 1}</div>
-                                     <div>
-                                         {/* Apply themed text color to step title */}
-                                         <h6 className="fw-semibold mb-1" style={{ color: currentTheme.textPrimary }}>{step.title}</h6>
-                                         {/* renderParagraphs applies themed text color */}
-                                         {step.description && renderParagraphs(step.description, {marginBottom: '0'})}
-                                     </div>
-                                 </li>
-                             ))}
-                         </ol>
-                     </div>
-                 </div>
-             </section>
-         );
-     };
+    // MODIFIED: Render Target Audience section only if it has content, and title only if content exists
+    const renderTargetAudience = () => {
+        const audienceData = data.targetAudience;
+        if (!audienceData) return null;
 
-    // Render Features/Benefits (Card Style)
-    const renderFeatures = () => data.features && Array.isArray(data.features) && data.features.length > 0 && (
-        <section style={dynamicStyles.dynamicSection}>
-            {renderSectionTitle(data.features.title || "Key Benefits")}
-            <div className="row g-4 justify-content-center">
-                {data.features.map((feature, idx) => renderCard(feature, idx, 'feature'))}
-            </div>
-        </section>
-    );
+        const introContent = renderParagraphs(audienceData.introText);
+        const audienceListItems = audienceData.list?.filter(isNonEmptyString);
+        const hasList = isNonEmptyArray(audienceListItems);
+        const hasPrerequisite = isNonEmptyString(audienceData.prerequisite);
 
-    // Render Target Audience
-    const renderTargetAudience = () => data.targetAudience && data.targetAudience.list && Array.isArray(data.targetAudience.list) && (
-        <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgAccent }}>
-            {renderSectionTitle(data.targetAudience.title || "Who Should Attend?")}
-            {data.targetAudience.introText && <div className="fs-5 text-center mx-auto mb-4" style={{ maxWidth: "800px" }}>{renderParagraphs(data.targetAudience.introText)}</div>}
-            <ul style={{ ...dynamicStyles.listStyleBase, ...dynamicStyles.audienceList, ...(data.targetAudience.list.length > 6 ? dynamicStyles.audienceColumns : {}) }}>
-                {data.targetAudience.list.map((item, index) => (
-                    <li key={index} style={{ ...dynamicStyles.listItemBase, ...dynamicStyles.audienceListItem }}>
-                        <Icons.UserCheck size={20} style={dynamicStyles.listGroupIcon} />
-                        {/* Apply themed text color to list item text */}
-                        <span style={{color: dynamicStyles.listItemBase.color}}>{item}</span>
-                    </li>
-                ))}
-            </ul>
-            {data.targetAudience.prerequisite && (
-                <span style={dynamicStyles.prerequisiteNote}>{data.targetAudience.prerequisite}</span>
-            )}
-        </section>
-    );
+        if (!introContent && !hasList && !hasPrerequisite) return null; // Don't render if section is empty
 
-    // Render Course Content
-     const renderCourseContent = () => data.courseContent && data.courseContent.modules && Array.isArray(data.courseContent.modules) && (
-        <section style={dynamicStyles.dynamicSection}>
-            {renderSectionTitle(data.courseContent.title || "Course Outline")}
-            {data.courseContent.introText && <div className="fs-5 text-center mx-auto mb-4" style={{ maxWidth: "800px" }}>{renderParagraphs(data.courseContent.introText)}</div>}
-            {data.courseContent.image && (
-                <div className="mb-4 text-center">
-                    <img src={data.courseContent.image} alt="Course Content Visual" className="img-fluid rounded shadow-sm" style={{ maxWidth: '600px', margin: 'auto' }} />
-                </div>
-            )}
-             <ul style={{ ...dynamicStyles.listStyleBase, ...dynamicStyles.courseModulesList }}>
-                {data.courseContent.modules.map((moduleText, index) => (
-                    <li key={index} style={{ ...dynamicStyles.listItemBase, ...dynamicStyles.courseModuleItem }}>
-                        <span style={dynamicStyles.courseModuleItemBefore}></span>
-                         {/* Apply themed text color to module text */}
-                        <span style={{color: dynamicStyles.listItemBase.color}}>{moduleText}</span>
-                    </li>
-                ))}
-            </ul>
-        </section>
-    );
+        return (
+            <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgAccent }}>
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(introContent || hasList || hasPrerequisite) && renderSectionTitle(audienceData.title || "Who Should Attend?")}
 
-    // Render Methodology
-    const renderMethodology = () => data.methodology && data.methodology.points && Array.isArray(data.methodology.points) && (
-        <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgLight }}>
-            <div className="row g-4 align-items-center">
-                <div className={data.methodology.image ? "col-lg-7" : "col-12"}>
-                    {renderSectionTitle(data.methodology.title || "Training Methodology")}
-                    {data.methodology.introText && <div className="fs-5 mb-4">{renderParagraphs(data.methodology.introText)}</div>}
-                    <ul style={{ ...dynamicStyles.listStyleBase, ...dynamicStyles.methodologyList }}>
-                        {data.methodology.points.map((point, index) => (
-                            <li key={index} style={{ ...dynamicStyles.listItemBase, ...dynamicStyles.methodologyListItem }}>
-                                <Icons.CheckCircle size={20} style={dynamicStyles.listGroupIcon} />
-                                 {/* Apply themed text color to list item text */}
-                                <span style={{color: dynamicStyles.listItemBase.color}}>{point}</span>
+                {introContent && <div className="fs-5 text-center mx-auto mb-4" style={{ maxWidth: "800px" }}>{introContent}</div>}
+
+                {hasList && (
+                    <ul style={{ ...dynamicStyles.listStyleBase, ...dynamicStyles.audienceList, ...(audienceListItems.length > 6 ? dynamicStyles.audienceColumns : {}) }}>
+                        {audienceListItems.map((item, index) => (
+                            <li key={index} style={{ ...dynamicStyles.listItemBase, ...dynamicStyles.audienceListItem }}>
+                                <Icons.UserCheck size={20} style={dynamicStyles.listGroupIcon} />
+                                <span style={{ color: dynamicStyles.listItemBase.color }}>{item}</span>
                             </li>
                         ))}
                     </ul>
-                </div>
-                {data.methodology.image && (
-                    <div className="col-lg-5 text-center">
-                        <img src={data.methodology.image} alt="Training Methodology" className="img-fluid rounded shadow" style={{maxWidth: '450px'}}/>
+                )}
+                {hasPrerequisite && (
+                    <span style={dynamicStyles.prerequisiteNote}>{audienceData.prerequisite}</span>
+                )}
+            </section>
+        );
+    }
+
+    // MODIFIED: Render Course Content section only if it has content, and title only if content exists
+    const renderCourseContent = () => {
+        const contentData = data.courseContent;
+        if (!contentData) return null;
+
+        const introContent = renderParagraphs(contentData.introText);
+        const moduleItems = contentData.modules?.filter(isNonEmptyString);
+        const hasModules = isNonEmptyArray(moduleItems);
+        const hasImage = contentData.image;
+
+        if (!introContent && !hasModules && !hasImage) return null; // Don't render if empty
+
+        return (
+            <section style={dynamicStyles.dynamicSection}>
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(introContent || hasModules || hasImage) && renderSectionTitle(contentData.title || "Course Outline")}
+
+                {introContent && <div className="fs-5 text-center mx-auto mb-4" style={{ maxWidth: "800px" }}>{introContent}</div>}
+                {hasImage && (
+                    <div className="mb-4 text-center">
+                        <img src={contentData.image} alt="Course Content Visual" className="img-fluid rounded shadow-sm" style={{ maxWidth: '600px', margin: 'auto' }} />
                     </div>
                 )}
-            </div>
-        </section>
-    );
+                {hasModules && (
+                    <ul style={{ ...dynamicStyles.listStyleBase, ...dynamicStyles.courseModulesList }}>
+                        {moduleItems.map((moduleText, index) => (
+                            <li key={index} style={{ ...dynamicStyles.listItemBase, ...dynamicStyles.courseModuleItem }}>
+                                <span style={dynamicStyles.courseModuleItemBefore}></span>
+                                <span style={{ color: dynamicStyles.listItemBase.color }}>{moduleText}</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+        );
+    }
 
-    // Render Clients Section
-    const renderClients = () => data.clients && (
-        <section style={{...dynamicStyles.dynamicSection, paddingBottom: '1rem'}} className="text-center">
-            {renderSectionTitle(data.clients.title || "Trusted By")}
-            <div className="container">
-                 {data.clients.logos && Array.isArray(data.clients.logos) && data.clients.logos.length > 0 ? (
-                     <div className="row justify-content-center align-items-center mt-4">
-                         {data.clients.logos.map((logo, index) => (
-                             <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 text-center">
-                                 <img src={logo.image} alt={logo.name || `Client ${index + 1}`} className="img-fluid" style={{ maxHeight: '60px', filter: 'grayscale(70%)', opacity: 0.8 }} />
-                             </div>
-                         ))}
-                     </div>
-                 ) : data.clients.image ? (
-                    <img
-                        src={data.clients.image}
-                        alt="Client Logos"
-                        className="img-fluid"
-                        style={{ maxHeight: '1000px', width: 'auto', margin: 'auto', filter: 'grayscale(60%)', opacity: 0.75 }}
-                    />
-                 ) : null}
-                {data.clients.text && <div className="fs-5 mt-3 text-muted">{renderParagraphs(data.clients.text)}</div>}
-            </div>
-        </section>
-    );
+    // MODIFIED: Render Methodology section only if it has content, and title only if content exists
+    const renderMethodology = () => {
+        const methodologyData = data.methodology;
+        if (!methodologyData) return null;
 
-     // Render Form Section
-     const renderForm = () => data.form && (
-         <section id="contact-form-section" style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.formSection }}>
-             <div className="row justify-content-center">
-                 <div className="col-lg-8 col-md-10">
-                     {renderSectionTitle(data.form.title || "Get In Touch")}
-                     {data.form.description && <p className="text-center lead mb-4" style={{color: currentTheme.textSecondary}}>{data.form.description}</p>}
-                     <form onSubmit={(e) => e.preventDefault()}>
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label htmlFor="formName" style={dynamicStyles.formLabel}>Name</label>
-                                <input type="text" id="formName" style={dynamicStyles.formInput} placeholder="Your Name" required />
-                            </div>
-                             <div className="col-md-6 mb-3">
-                                <label htmlFor="formEmail" style={dynamicStyles.formLabel}>Email</label>
-                                <input type="email" id="formEmail" style={dynamicStyles.formInput} placeholder="Your Email" required />
-                            </div>
+        const introContent = renderParagraphs(methodologyData.introText);
+        const pointItems = methodologyData.points?.filter(isNonEmptyString);
+        const hasPoints = isNonEmptyArray(pointItems);
+        const hasImage = methodologyData.image;
+
+        if (!introContent && !hasPoints && !hasImage) return null; // Don't render if empty
+
+        return (
+            <section style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.dynamicSectionBgLight }}>
+                <div className="row g-4 align-items-center">
+                    <div className={hasImage ? "col-lg-7" : "col-12"}>
+                        {/* --- MODIFIED: Conditional Title --- */}
+                        {(introContent || hasPoints) && renderSectionTitle(methodologyData.title || "Training Methodology")}
+
+                        {introContent && <div className="fs-5 mb-4">{introContent}</div>}
+                        {hasPoints && (
+                            <ul style={{ ...dynamicStyles.listStyleBase, ...dynamicStyles.methodologyList }}>
+                                {pointItems.map((point, index) => (
+                                    <li key={index} style={{ ...dynamicStyles.listItemBase, ...dynamicStyles.methodologyListItem }}>
+                                        <Icons.CheckCircle size={20} style={dynamicStyles.listGroupIcon} />
+                                        <span style={{ color: dynamicStyles.listItemBase.color }}>{point}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                    {hasImage && (
+                        <div className="col-lg-5 text-center">
+                            <img src={methodologyData.image} alt="Training Methodology" className="img-fluid rounded shadow" style={{ maxWidth: '450px' }} />
                         </div>
-                         <div className="mb-3">
-                             <label htmlFor="formSubject" style={dynamicStyles.formLabel}>Subject</label>
-                             <input type="text" id="formSubject" style={dynamicStyles.formInput} placeholder="Training Inquiry: [Training Name]" defaultValue={`Training Inquiry: ${data.title || ''}`} required />
-                         </div>
-                         <div className="mb-3">
-                              <label htmlFor="formMessage" style={dynamicStyles.formLabel}>Message</label>
-                             <textarea id="formMessage" style={dynamicStyles.formTextarea} rows="5" placeholder="Your Message / Questions" required></textarea>
-                         </div>
-                         <div className="text-center mt-4">
-                             {renderCtaButton(data.form.buttonTitle || "Submit Request")}
-                         </div>
-                     </form>
-                 </div>
-             </div>
-         </section>
-     );
+                    )}
+                </div>
+            </section>
+        );
+    }
+
+    // MODIFIED: Render Clients section only if it has content, and title only if content exists
+    const renderClients = () => {
+        const clientData = data.clients;
+        if (!clientData) return null;
+
+        const hasLogosArray = isNonEmptyArray(clientData.logos);
+        const hasImage = clientData.image;
+        const textContent = renderParagraphs(clientData.text);
+
+        if (!hasLogosArray && !hasImage && !textContent) return null; // Don't render if empty
+
+        return (
+            <section style={{ ...dynamicStyles.dynamicSection, paddingBottom: '1rem' }} className="text-center">
+                {/* --- MODIFIED: Conditional Title --- */}
+                {(hasLogosArray || hasImage || textContent) && renderSectionTitle(clientData.title || "Trusted By")}
+                <div className="container">
+                    {hasLogosArray ? (
+                        <div className="row justify-content-center align-items-center mt-4">
+                            {clientData.logos.map((logo, index) => (
+                                logo.image && // Render only if logo has an image
+                                <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 text-center">
+                                    <img src={logo.image} alt={logo.name || `Client ${index + 1}`} className="img-fluid" style={{ maxHeight: '60px', filter: 'grayscale(70%)', opacity: 0.8 }} />
+                                </div>
+                            ))}
+                        </div>
+                    ) : hasImage ? (
+                        <img
+                            src={clientData.image}
+                            alt="Client Logos"
+                            className="img-fluid"
+                            style={{ maxHeight: '1000px', width: 'auto', margin: 'auto', filter: 'grayscale(60%)', opacity: 0.75 }}
+                        />
+                    ) : null}
+                    {textContent && <div className="fs-5 mt-3 text-muted">{textContent}</div>}
+                </div>
+            </section>
+        );
+    }
+
+    // MODIFIED: Render Form section only if form data exists, and title only if title/desc exists
+    const renderForm = () => {
+        const formData = data.form;
+        if (!formData) return null; // Don't render if no form data
+
+        const hasDescription = isNonEmptyString(formData.description);
+        const hasTitle = isNonEmptyString(formData.title);
+
+        return (
+            <section id="contact-form-section" style={{ ...dynamicStyles.dynamicSection, ...dynamicStyles.formSection }}>
+                <div className="row justify-content-center">
+                    <div className="col-lg-8 col-md-10">
+                        {/* --- MODIFIED: Conditional Title --- */}
+                        {(hasTitle || hasDescription) && renderSectionTitle(formData.title || "Get In Touch")}
+
+                        {hasDescription && <p className="text-center lead mb-4" style={{ color: currentTheme.textSecondary }}>{formData.description}</p>}
+                        <form onSubmit={(e) => e.preventDefault()}>
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label htmlFor="formName" style={dynamicStyles.formLabel}>Name</label>
+                                    <input type="text" id="formName" style={dynamicStyles.formInput} placeholder="Your Name" required />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label htmlFor="formEmail" style={dynamicStyles.formLabel}>Email</label>
+                                    <input type="email" id="formEmail" style={dynamicStyles.formInput} placeholder="Your Email" required />
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="formSubject" style={dynamicStyles.formLabel}>Subject</label>
+                                <input type="text" id="formSubject" style={dynamicStyles.formInput} placeholder="Training Inquiry: [Training Name]" defaultValue={`Training Inquiry: ${data.title || ''}`} required />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="formMessage" style={dynamicStyles.formLabel}>Message</label>
+                                <textarea id="formMessage" style={dynamicStyles.formTextarea} rows="5" placeholder="Your Message / Questions" required></textarea>
+                            </div>
+                            <div className="text-center mt-4">
+                                {renderCtaButton(formData.buttonTitle || "Submit Request")}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     // --- Main Render Logic ---
     return (
@@ -638,25 +776,26 @@ export default function TrainingPage({ params }) {
             {renderBanner()}
 
             <div className="container py-4">
-                {/* Conditionally render sections based on data existence */}
+                {/* Sections will now only render if they have content */}
                 {renderIntro()}
                 {renderWhyChoose()}
 
-                 {/* Render the primary content block based on its key */}
-                {data.pillars && renderPillars()}
-                {data.keyConcepts && renderKeyConcepts('keyConcepts', 'Key Concepts')}
-                {data.keyFocusAreas && renderKeyConcepts('keyFocusAreas', 'Key Focus Areas')}
-                {data.keyLeanTools && renderKeyConcepts('keyLeanTools', 'Key Lean Tools')}
-                {data.designThinkingPhases && renderKeyConcepts('designThinkingPhases', 'Design Thinking Phases')}
-                {data.bscPerspectives && renderKeyConcepts('bscPerspectives', 'Balanced Scorecard Perspectives')}
-                {data.processSteps && renderProcessSteps()}
-                {data.keyTechniques && renderKeyConcepts('keyTechniques', 'Key Techniques')}
-                {data.keyConceptsTools && renderKeyConcepts('keyConceptsTools', 'Key Concepts & Tools')}
-                {data.keyTechniquesCovered && renderKeyConcepts('keyTechniquesCovered', 'Key Techniques Covered')}
-                {data.wcmPillars && renderKeyConcepts('wcmPillars', 'WCM Pillars')}
-                {data.ppapElements && renderKeyConcepts('ppapElements', 'Key PPAP Elements')}
-                {data.keyStrategies && renderKeyConcepts('keyStrategies', 'Key Strategies')}
-                {data.keyTools && renderKeyConcepts('keyTools', 'Key Tools Covered')}
+                {/* Render the primary content block based on its key */}
+                {/* These functions now internally check for content before rendering */}
+                {renderPillars()}
+                {renderKeyConcepts('keyConcepts', 'Key Concepts')}
+                {renderKeyConcepts('keyFocusAreas', 'Key Focus Areas')}
+                {renderKeyConcepts('keyLeanTools', 'Key Lean Tools')}
+                {renderKeyConcepts('designThinkingPhases', 'Design Thinking Phases')}
+                {renderKeyConcepts('bscPerspectives', 'Balanced Scorecard Perspectives')}
+                {renderProcessSteps()}
+                {renderKeyConcepts('keyTechniques', 'Key Techniques')}
+                {renderKeyConcepts('keyConceptsTools', 'Key Concepts & Tools')}
+                {renderKeyConcepts('keyTechniquesCovered', 'Key Techniques Covered')}
+                {renderKeyConcepts('wcmPillars', 'WCM Pillars')}
+                {renderKeyConcepts('ppapElements', 'Key PPAP Elements')}
+                {renderKeyConcepts('keyStrategies', 'Key Strategies')}
+                {renderKeyConcepts('keyTools', 'Key Tools Covered')}
 
                 {renderFeatures()}
                 {renderTargetAudience()}
