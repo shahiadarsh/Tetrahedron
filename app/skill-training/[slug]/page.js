@@ -145,7 +145,7 @@ export default function TrainingPage({ params }) {
         // --- Banner Styles ---
         banner: {
             position: "relative", minHeight: "400px", height: "auto", overflow: "hidden",
-            backgroundColor: currentTheme.bannerBg, // Use theme color
+            // backgroundColor: currentTheme.bannerBg, // Use theme color
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '50px 20px', color: 'white',
         },
