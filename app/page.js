@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout"
 import Banner from "@/components/home/Banner"
 import Services from "@/components/home/Services"
@@ -21,12 +20,10 @@ import Awards  from "@/components/home/Awards"
 import Industry from "@/components/home/Industry"
 import TrustedBrands from "@/components/home/TrustedBrands"
 
-
 export default function Home() {
-
     return (
-        <>
-            <Layout >
+        <Layout>
+            <div style={{ zoom: '80%' }}>
                 <Banner />
                 <About />
                 <Business />
@@ -47,8 +44,7 @@ export default function Home() {
                 <Testimonial />
                 {/* <Brand /> */}
                 {/* <Blog /> */}
- 
-            </Layout>
-        </>
+            </div>
+        </Layout>
     )
 }
