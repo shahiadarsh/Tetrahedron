@@ -11,7 +11,7 @@ export default function Header({ scroll, handlePopup, handleMobileMenu }) {
     const [isModalOpen, setModalOpen] = useState(false);
     return (
         <>
-            <header className={`main-header-two ${scroll ? "fixed-header" : ""}`}>
+            <header className={`main-header-two ${scroll ? "fixed-header" : ""}`} style={{ zoom: '80%' }}>
                 <div className="main-header-two__wrap">
                     <div className="main-header-two__logo">
                         <Link href="/">
